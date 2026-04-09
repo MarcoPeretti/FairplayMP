@@ -1,18 +1,34 @@
 #!/usr/bin/env bash
 # debug-multipass.sh — Run FairplayMP on all 5 VMs with one party in the foreground
-# Usage: ./debug-multipass.sh [SEED] [INPUT] [--foreground VM]
-#   SEED          Random seed (default: 12345)
-#   INPUT         Bid value for all parties (default: 0)
-#   --foreground  VM to run in foreground (default: bidder0); others log to /tmp/fpmp-<vm>.log
+# Usage: ./debug-multipass.sh [--foreground VM] [SEED] [INPUT]
+#   --foreground VM  VM to run in foreground (default: bidder0); others log to /tmp/fpmp-<vm>.log
+#   SEED             Random seed (default: 12345)
+#   INPUT            Bid value for all parties (default: 0)
 
 set -euo pipefail
 
-SEED="${1:-12345}"
-INPUT="${2:-0}"
-FG_VM="${4:-bidder0}"   # default foreground VM (arg 4 after --foreground)
-if [[ "${3:-}" == "--foreground" ]]; then
-  FG_VM="${4:?--foreground requires a VM name}"
-fi
+# Parse arguments - handle --foreground anywhere
+SEED="12345"
+INPUT="0"
+FG_VM="bidder0"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --foreground)
+      FG_VM="${2:?--foreground requires a VM name}"
+      shift 2
+      ;;
+    *)
+      # First non-flag arg is SEED, second is INPUT
+      if [[ "$SEED" == "12345" && "$1" =~ ^[0-9]+$ ]]; then
+        SEED="$1"
+      elif [[ "$INPUT" == "0" && "$1" =~ ^[0-9]+$ ]]; then
+        INPUT="$1"
+      fi
+      shift
+      ;;
+  esac
+done
 
 VMS=(bidder0 bidder1 bidder2 bidder3 seller)
 
