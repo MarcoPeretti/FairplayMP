@@ -47,14 +47,18 @@ public class Server implements Runnable{
 		        _connection = serversocket.accept();
 		        if (_connection == null)
 		        	return;
-		        
+
 		        // push the message into the queue.
-				synchronized (_msgQ){
-					String ip = _connection.getInetAddress().getHostAddress();
-					Msg msg = new Msg(BasicMsg.parseFrom(_connection.getInputStream()));
-					_msgQ.add(new MsgPair(msg, ip));
-					_msgQ.notifyAll();
-				}
+		        try {
+					synchronized (_msgQ){
+						String ip = _connection.getInetAddress().getHostAddress();
+						Msg msg = new Msg(BasicMsg.parseFrom(_connection.getInputStream()));
+						_msgQ.add(new MsgPair(msg, ip));
+						_msgQ.notifyAll();
+					}
+		        } catch (Exception e) {
+		        	System.err.println("[Server] connection error: " + e.getMessage());
+		        }
 			}
 	    }
 	    catch (Exception e) {
@@ -102,11 +106,12 @@ public class Server implements Runnable{
 		}
 
 		protected void deliver(MsgPair mp) {
-			
-			int msgID = mp._msg.getID(); 
+
+			int msgID = mp._msg.getID();
 			SortedMap<String, Msg> msgs = _msgs.elementAt(msgID);
 			synchronized (msgs){
 				msgs.put(mp._ip,mp._msg);
+				System.err.println("[Server] msg " + msgID + " from " + mp._ip + " (total=" + msgs.size() + ")");
 				msgs.notifyAll();
 			}
 		}

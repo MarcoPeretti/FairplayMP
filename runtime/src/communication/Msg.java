@@ -54,14 +54,18 @@ public class Msg {
 	}
 	
 	public BasicMsg getBasicMsg() {
+		if (_cachedBasicMsg != null)
+			return _cachedBasicMsg;
 		BasicMsg.Builder bm = BasicMsg.newBuilder();
 		bm.setMsgId(_id);
 		for (BigInteger data : _msg) {
 			bm.addData(ByteString.copyFrom(data.toByteArray()));
 		}
-		_msg = null;
-		return bm.build();
+		_cachedBasicMsg = bm.build();
+		return _cachedBasicMsg;
 	}
+
+	private BasicMsg _cachedBasicMsg = null;
 	
 	public String toString() {
 		Utils.printErr("Msg has no toString");

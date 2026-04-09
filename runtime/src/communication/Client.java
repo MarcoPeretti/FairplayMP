@@ -6,12 +6,14 @@
 
 package communication;
 
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 //import javax.net.ssl.SSLSocketFactory;
@@ -84,23 +86,30 @@ public class Client {
 
 		@Override
 		public void run() {
-			
-			while (true){//for (int i = 0 ; i < 10 ; i++) { 
+
+			while (true) {
+				Socket raw = null;
 				try {
-				    Socket socket = _socketFactory.createSocket(_ip, _port);
-				    _msg.getBasicMsg().writeTo(socket.getOutputStream());
-				
-					// Close the connection and finish
+					// Use explicit connect timeout so we never block forever
+					raw = new Socket();
+					raw.connect(new InetSocketAddress(_ip, _port), 5000);
+					SSLSocket socket = (SSLSocket) ((SSLSocketFactory) _socketFactory)
+							.createSocket(raw, _ip, _port, true);
+					socket.setSoTimeout(10000);
+					socket.startHandshake();
+					_msg.getBasicMsg().writeTo(socket.getOutputStream());
 					socket.close();
 					return;
 				}
 				catch(Exception e){
+					System.err.println("[Sender] failed to " + _ip + ": " + e.getMessage());
+					if (raw != null) { try { raw.close(); } catch (Exception ignored) {} }
 					try {
 						Thread.sleep(100);
-					} 
-					catch (InterruptedException e1) {}						
+					}
+					catch (InterruptedException e1) {}
 				}
-			}			
+			}
 		}
 	}
 }

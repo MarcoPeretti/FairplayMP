@@ -75,21 +75,21 @@ public abstract class Player implements Runnable {
 	}
 	
 	protected void waitForMsgs(int i) {
-		//System.err.println("Waiting for msg " + i);
-		//long t = System.currentTimeMillis();
 		int size = (i == 0 || i == 7)?_IP.length:_n;
-		SortedMap<String, Msg> msgs = _msgs.elementAt(i); 
+		SortedMap<String, Msg> msgs = _msgs.elementAt(i);
+		System.err.println("[Wait] msg " + i + " need " + size + ", have " + msgs.size());
 		synchronized(msgs){
 			while (msgs.size() != size){
 				try {
-					msgs.wait();
+					msgs.wait(5000);
+					System.err.println("[Wait] msg " + i + " still waiting: have " + msgs.size() + "/" + size);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 					System.exit(1);
-				}				
+				}
 			}
 		}
-		//System.err.println("For msg " + i + " waited: " + (System.currentTimeMillis() - t));
+		System.err.println("[Wait] msg " + i + " done.");
 	}
 	
 	protected void parseMsg(int msgID, MsgParser mp){
